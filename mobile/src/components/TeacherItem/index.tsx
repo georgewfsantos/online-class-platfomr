@@ -8,6 +8,7 @@ import unfavoriteIcon from "../../assets/images/icons/unfavorite.png";
 import whatsappIcon from "../../assets/images/icons/whatsapp.png";
 
 import styles from "./styles";
+import api from "../../services/api";
 
 export interface Teacher {
   id: number;
@@ -29,28 +30,38 @@ const TeacherItem: React.FC<TeacherItemProps> = ({ teacher, isFavorite }) => {
 
   function handleLinkToWhatsapp() {
     Linking.openURL(`whatsapp://send?phone=${teacher.whatsapp}`);
+
+    api.post("/connections", {
+      user_id: teacher.id,
+    });
   }
 
   async function handleToggleAddToFavorites() {
+    const favorites = await AsyncStorage.getItem("favorites");
+
+    let favoritesArray = [];
+
+    if (favorites) {
+      favoritesArray = JSON.parse(favorites);
+    }
+
     if (isAmongFavorites) {
+      const indexOfFavorite = favoritesArray.findIndex(
+        (favoriteTeacher: Teacher) => {
+          return favoriteTeacher?.id === teacher.id;
+        }
+      );
+
+      favoritesArray.splice(indexOfFavorite, 1);
+
+      SetIsAmongFavorites(false);
     } else {
-      const favorites = await AsyncStorage.getItem("favorites");
-
-      let favoritesArray = [];
-
-      if (favorites) {
-        favoritesArray = JSON.parse(favorites);
-      }
-
       favoritesArray.push(teacher);
 
       SetIsAmongFavorites(true);
-      await AsyncStorage.setItem("favorites", JSON.stringify(favoritesArray));
-
-      console.log(
-        AsyncStorage.setItem("favorites", JSON.stringify(favoritesArray))
-      );
     }
+
+    await AsyncStorage.setItem("favorites", JSON.stringify(favoritesArray));
   }
 
   return (
